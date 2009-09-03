@@ -1,0 +1,2 @@
+module Kanpai2kaimeHelper
+end

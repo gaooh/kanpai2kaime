@@ -1,0 +1,7 @@
+&#xF8D3;近辺の飲み屋<br/>
+<br/>
+<% @tabelogs.each do | tabelog | %>
+<%= link_to tabelog.restaurant_name, :controller => :kanpai2kaime, :action => :drink_detail, :id => tabelog.id %></a><br/>
+&#xF95E;<%= tabelog.business_hours %><br/><br/>
+<% end %>
+

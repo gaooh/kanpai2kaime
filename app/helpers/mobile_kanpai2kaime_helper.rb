@@ -1,0 +1,2 @@
+module MobileKanpai2kaimeHelper
+end

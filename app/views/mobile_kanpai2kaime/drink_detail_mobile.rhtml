@@ -1,0 +1,23 @@
+&#xF8D3;<a href="<%= @tabelog.tabelog_url %>"><%= @tabelog.restaurant_name %></a><br/>
+<br/>
+
+&#xF95E;<%= @tabelog.business_hours %><br/>
+&#xF8E9;<a href="tel:<%= @tabelog.tel %>"/><br/>
+&#xF8C5;<%= @tabelog.address %><br/>
+
+<img src="http://maps.google.com/staticmap?center=<%= @tabelog.latitude %>,<%= @tabelog.longitude %>&markers=<%= @tabelog.latitude %>,<%= @tabelog.longitude %>,redc|<%= @pos.lat %>,<%= @pos.lon %>,greenm&maptype=mobile&zoom=16&size=200x200&key=ABQIAAAAD2C9vjTBnLGu3WbyCyIGDRRYgM0qMrRMrPdkY1nmNlDlPCB-0BQ09AdTGjsgTknkZZRijjj26l74bg"/> 
+<br/><br/>
+
+カテゴリ:<%= @tabelog.category %><br/>
+夜平均予算:<%= @tabelog.dinner_price %><br/>
+<br/>
+<div style="background-color: #FF9100;"><center>&#xF8EA;評価&#xF8EA;</center></div>
+
+総合:<%= @tabelog.total_score %><br/>
+味:<%= @tabelog.taste_score %><br/>
+サービス:<%= @tabelog.service_score %><br/>
+ムード:<%= @tabelog.mood_score %><br/>
+
+<% content_for(:footer) do %>
+<%= link_to_mobile 1, '戻る', :action => 'drink' %>
+<% end %>

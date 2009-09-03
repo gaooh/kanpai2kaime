@@ -1,0 +1,108 @@
+Index: lib/active_resource/base.rb
+===================================================================
+--- lib/active_resource/base.rb	(revision 7523)
++++ lib/active_resource/base.rb	(working copy)
+@@ -462,7 +462,18 @@
+         end
+         
+         def instantiate_collection(collection, prefix_options = {})
+-          collection.collect! { |record| instantiate_record(record, prefix_options) }
++          if collection.is_a?(Hash) && collection.size == 1
++            value = collection.values.first
++            if value.is_a?(Array)
++              value.collect! { |record| instantiate_record(record, prefix_options) }
++            else
++              [ instantiate_record(value, prefix_options) ]
++            end
++          elsif collection.is_a?(Hash)
++            instantiate_record(collection, prefix_options)
++          else
++            collection.collect! { |record| instantiate_record(record, prefix_options) }
++          end
+         end
+ 
+         def instantiate_record(record, prefix_options = {})
+Index: test/base_test.rb
+===================================================================
+--- test/base_test.rb	(revision 7523)
++++ test/base_test.rb	(working copy)
+@@ -13,7 +13,7 @@
+     @people = [{ :id => 1, :name => 'Matz' }, { :id => 2, :name => 'David' }].to_xml(:root => 'people')
+     @people_david = [{ :id => 2, :name => 'David' }].to_xml(:root => 'people')
+     @addresses = [{ :id => 1, :street => '12345 Street' }].to_xml(:root => 'addresses')
+-    
++
+     ActiveResource::HttpMock.respond_to do |mock|
+       mock.get    "/people/1.xml",             {}, @matz
+       mock.get    "/people/2.xml",             {}, @david
+@@ -441,4 +441,70 @@
+     matz = Person.find(1)
+     assert_equal "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<person>\n  <name>Matz</name>\n  <id type=\"integer\">1</id>\n</person>\n", matz.to_xml
+   end
++
++  def test_unspecified_collection_types
++  # Tests and data to prove that we've fixed the "undefined method 'collect!' for Hash" problem
++    @people_xml = <<XML
++<?xml version="1.0" encoding="UTF-8"?>
++<people>
++  <person>
++    <name>Matz</name>
++    <id type="integer">1</id>
++  </person>
++  <person>
++    <name>David</name>
++    <id type="integer">2</id>
++  </person>
++</people>
++XML
++
++    @people_david_xml = <<XML
++<?xml version="1.0" encoding="UTF-8"?>
++<people>
++  <person>
++    <name>David</name>
++    <id type="integer">2</id>
++  </person>
++</people>
++XML
++
++    @problematic = <<XML
++<?xml version="1.0" encoding="UTF-8"?> 
++<account>
++  <id type="integer">1</id> 
++  <account-number>1234</account-number> 
++  <name>Checking</name>
++  <txactions>
++    <txaction>
++      <date>2007-05-03</date> 
++      <amount>-89.72</amount> 
++      <merchant>
++        <name>Berkeley Bowl</name> <rating>Fan</rating>
++      </merchant>
++    </txaction>
++  </txactions>
++</account> 
++XML
++
++    ActiveResource::HttpMock.respond_to { |m| 
++      m.get "/firms/1/people.xml", {}, @people_xml 
++      m.get "/partners/1/people.xml", {}, @people_david_xml
++      m.get "/problems/1/people.xml", {}, @problematic
++    }
++
++    people = Person.find(:all, :from => "/firms/1/people.xml")
++    
++    assert_equal 2, people.size
++    assert_kind_of Person, people.first
++    assert_equal "Matz", people.first.name
++    assert_equal "David", people.last.name
++
++    people = Person.find(:all, :from => "/partners/1/people.xml")
++    assert_equal 1, people.size
++    assert_equal "David", people.first.name
++
++    got = Person.find(:all, :from => "/problems/1/people.xml")
++    assert_equal "Checking", got.name
++    assert_equal "-89.72", got.txactions.txaction.amount
++  end
+ end
